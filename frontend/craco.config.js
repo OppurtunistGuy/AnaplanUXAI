@@ -61,6 +61,20 @@ let webpackConfig = {
 };
 
 webpackConfig.devServer = (devServerConfig) => {
+  // Strip deprecated webpack-dev-server v4 options that react-scripts 5 still injects
+  delete devServerConfig.onAfterSetupMiddleware;
+  delete devServerConfig.onBeforeSetupMiddleware;
+  if (devServerConfig.https !== undefined) {
+    devServerConfig.server = devServerConfig.https ? "https" : "http";
+    delete devServerConfig.https;
+  }
+  delete devServerConfig.public;
+  delete devServerConfig.publicPath;
+  delete devServerConfig.contentBase;
+  delete devServerConfig.contentBasePublicPath;
+  delete devServerConfig.disableHostCheck;
+  devServerConfig.allowedHosts = "all";
+
   // Add health check endpoints if enabled
   if (config.enableHealthCheck && setupHealthEndpoints && healthPluginInstance) {
     const originalSetupMiddlewares = devServerConfig.setupMiddlewares;
