@@ -12,7 +12,6 @@ export default function Level1Question() {
   const { questionIndex, skipsUsed } = state.level1;
   const player = state.currentPlayer;
   const q = LEVEL_1_QUESTIONS[questionIndex];
-  const skipsLeft = 3 - (skipsUsed[player] || 0);
   const [seconds, setSeconds] = useState(TIMER_SECONDS);
 
   useEffect(() => {
@@ -20,13 +19,18 @@ export default function Level1Question() {
   }, [questionIndex, player]);
 
   useEffect(() => {
+    if (!q) return; // No more questions; phase is transitioning
     if (seconds <= 0) {
       dispatch({ type: "L1_ANSWER", choice: "timeout" });
       return;
     }
     const t = setTimeout(() => setSeconds((s) => s - 1), 1000);
     return () => clearTimeout(t);
-  }, [seconds, dispatch]);
+  }, [seconds, dispatch, q]);
+
+  if (!q) return null;
+
+  const skipsLeft = 3 - (skipsUsed[player] || 0);
 
   const pick = (choice) => dispatch({ type: "L1_ANSWER", choice });
   const skip = () => {
