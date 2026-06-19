@@ -1,0 +1,157 @@
+{
+  "theme": "light",
+  "archetype": "3 (Pastel & Soft - E1 Modified for Warm Connection)",
+  "vibe": "Playful but warm, tactile clay, intimate connection without being purely romantic. 3D-friendly but clean.",
+  "colors": {
+    "background": {
+      "base": "#FDFBF7",
+      "card": "#FFFFFF",
+      "overlay": "rgba(253, 251, 247, 0.85)"
+    },
+    "primary": {
+      "DEFAULT": "#E91E63",
+      "hover": "#C2185B",
+      "light": "#FCE4EC",
+      "text": "#FFFFFF",
+      "gradient": "bg-gradient-to-br from-[#E91E63] to-[#7C3AED]"
+    },
+    "secondary": {
+      "DEFAULT": "#7C3AED",
+      "hover": "#5B21B6",
+      "light": "#EDE9FE",
+      "text": "#FFFFFF"
+    },
+    "text": {
+      "primary": "#1A0B2E",
+      "secondary": "#4B3B60",
+      "disabled": "#9CA3AF"
+    },
+    "accents": {
+      "success": "#10B981",
+      "warning": "#F59E0B",
+      "error": "#EF4444"
+    }
+  },
+  "typography": {
+    "fonts": {
+      "heading": "'Outfit', sans-serif",
+      "body": "'Figtree', sans-serif",
+      "emphasis": "'Caveat', cursive"
+    },
+    "scales": {
+      "h1": "text-4xl sm:text-5xl font-black tracking-tight",
+      "h2": "text-2xl sm:text-3xl font-bold tracking-tight",
+      "h3": "text-xl sm:text-2xl font-semibold",
+      "body": "text-base leading-relaxed",
+      "small": "text-sm text-[#4B3B60] font-medium"
+    }
+  },
+  "spacing_and_layout": {
+    "container": "max-w-md mx-auto min-h-screen relative overflow-hidden bg-[#FDFBF7] shadow-2xl sm:rounded-[2.5rem] sm:my-8 sm:border-[12px] sm:border-white/60",
+    "padding": {
+      "screen": "p-6 sm:p-8",
+      "card": "p-6"
+    },
+    "border_radius": {
+      "card": "rounded-3xl",
+      "button": "rounded-full",
+      "chip": "rounded-full"
+    },
+    "shadows": {
+      "card": "shadow-[0_8px_30px_rgb(0,0,0,0.04)]",
+      "floating": "shadow-[0_20px_40px_-15px_rgba(233,30,99,0.25)]"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#E91E63] text-white hover:bg-[#C2185B] rounded-full px-8 py-4 font-bold text-lg transition-transform hover:scale-105 active:scale-95 shadow-[0_20px_40px_-15px_rgba(233,30,99,0.25)]",
+      "secondary": "bg-[#7C3AED] text-white hover:bg-[#5B21B6] rounded-full px-8 py-4 font-bold text-lg transition-transform hover:scale-105 active:scale-95 shadow-[0_20px_40px_-15px_rgba(124,58,237,0.25)]",
+      "outline": "border-2 border-[#E91E63]/20 text-[#E91E63] hover:bg-[#E91E63]/5 rounded-full px-8 py-4 font-bold text-lg transition-colors"
+    },
+    "cards": {
+      "base": "bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[#E91E63]/5"
+    },
+    "chips": {
+      "hint": "bg-[#EDE9FE] text-[#7C3AED] px-4 py-1.5 rounded-full text-sm font-semibold inline-flex items-center gap-2"
+    }
+  },
+  "animations": {
+    "card_flip": "Framer motion animate={{ rotateY: 180 }} transition={{ duration: 0.6, type: 'spring', bounce: 0.4 }}",
+    "page_transition": "initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.05 }} transition={{ duration: 0.3 }}",
+    "dice_roll": "3D rotation effect using framer-motion (rotateX, rotateY, rotateZ rapid changes) ending on target face",
+    "pass_phone": "Slide out left, slide in right with a pulsing 'I'm Ready' button"
+  },
+  "pages": {
+    "landing": {
+      "layout": "Hero layout. Logo top center. Bold tagline 'Discover deeper' with Caveat font on 'for real'. 3 value prop cards (Live/Reveal/Grow). absolute bottom CTA.",
+      "testid_rules": "data-testid='home-start-btn', data-testid='home-features'"
+    },
+    "setup": {
+      "layout": "Two stacked cards for Player A and Player B. Input fields for names. Horizontal avatar selection. Bottom pinned 'Start Journey' CTA.",
+      "testid_rules": "data-testid='setup-player1-input', data-testid='setup-player2-input', data-testid='setup-start-btn'"
+    },
+    "level_1": {
+      "layout": "Top: Progress ring & Turn indicator. Mid: Split screen (50/50 vertical) for 'This or That' image cards. Images must have dark gradient overlays. Bot: Hint chip, Skips left counter.",
+      "testid_rules": "data-testid='l1-option-a', data-testid='l1-option-b', data-testid='l1-skip-btn'"
+    },
+    "handoff": {
+      "layout": "Full screen solid primary or secondary background. Large lock icon. Big text: 'Pass the phone to [Name]'. Central 'I'm ready' button.",
+      "testid_rules": "data-testid='handoff-ready-btn'"
+    },
+    "level_2": {
+      "layout": "Dice Roll animation screen -> Category Reveal -> Carousel of 5 blurred neighbor Cards. Free text input under active card (120 char max).",
+      "testid_rules": "data-testid='l2-dice-roll-btn', data-testid='l2-answer-input', data-testid='l2-submit-btn'"
+    },
+    "insights": {
+      "layout": "Grid of 6 summary cards revealing partner's comparative answers (e.g., 'What Surprised Us').",
+      "testid_rules": "data-testid='insights-grid'"
+    },
+    "level_3_teaser": {
+      "layout": "Dark theme inversion: Dark violet background #0F0518, neon pink lock. 'Coming Soon' glow text.",
+      "testid_rules": "data-testid='l3-teaser-card'"
+    }
+  },
+  "media": {
+    "level_1_pairs": [
+      {
+        "category": "Mountains",
+        "url": "https://images.pexels.com/photos/13922608/pexels-photo-13922608.jpeg",
+        "description": "Rocky mountain peak sunset"
+      },
+      {
+        "category": "Beaches",
+        "url": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
+        "description": "Seashore golden hour"
+      },
+      {
+        "category": "City",
+        "url": "https://images.pexels.com/photos/13427043/pexels-photo-13427043.jpeg",
+        "description": "Neon city skyline night"
+      },
+      {
+        "category": "Cafe",
+        "url": "https://images.pexels.com/photos/16155698/pexels-photo-16155698.jpeg",
+        "description": "Cozy cafe interior"
+      }
+    ],
+    "hero_illustrations": [
+      {
+        "category": "Connection Vibes 1",
+        "url": "https://images.pexels.com/photos/6550034/pexels-photo-6550034.jpeg",
+        "description": "Couple laughing and talking inside"
+      },
+      {
+        "category": "Connection Vibes 2",
+        "url": "https://images.pexels.com/photos/8111328/pexels-photo-8111328.jpeg",
+        "description": "Friends playing a game together"
+      }
+    ]
+  },
+  "icons": {
+    "library": "lucide-react",
+    "instructions": "Use lucide-react exclusively. No emojis. Stroke width 2.5 for a bolder, tactile look."
+  },
+  "testing": {
+    "required_attributes": "All interactive elements MUST have data-testid attributes (kebab-case, role-based)."
+  }
+}
