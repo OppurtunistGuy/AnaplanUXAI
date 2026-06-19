@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Shield, RefreshCw, Brain, Link2, Smartphone, Heart, Sparkles, Users, TrendingUp } from "lucide-react";
+import { Shield, RefreshCw, Brain, Link2, Smartphone, Heart, Users, MessagesSquare, Target } from "lucide-react";
 import { Logo } from "../components/Logo";
 import { useGame } from "../store/gameStore";
 
@@ -11,13 +11,13 @@ const Pill = ({ children }) => (
 );
 
 const ValueProp = ({ icon: Icon, title, desc }) => (
-  <div className="flex items-start gap-3 bg-white rounded-2xl p-4 border border-[#FBE7F3] shadow-[0_4px_20px_rgba(124,58,237,0.06)]">
-    <div className="shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-[#FCE4EC] to-[#EDE9FE] flex items-center justify-center">
-      <Icon size={20} className="text-[#7C3AED]" strokeWidth={2.5} />
+  <div className="flex flex-col items-start gap-2 bg-white rounded-2xl p-4 border border-[#FBE7F3] shadow-[0_4px_20px_rgba(124,58,237,0.06)]">
+    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FCE4EC] to-[#EDE9FE] flex items-center justify-center">
+      <Icon size={18} className="text-[#7C3AED]" strokeWidth={2.5} />
     </div>
     <div>
-      <div className="font-bold text-[#1A0B2E] text-sm">{title}</div>
-      <div className="text-xs text-[#4B3B60] mt-0.5">{desc}</div>
+      <div className="font-bold text-[#1A0B2E] text-sm leading-tight">{title}</div>
+      <div className="text-xs text-[#4B3B60] mt-0.5 leading-tight">{desc}</div>
     </div>
   </div>
 );
@@ -66,10 +66,11 @@ export default function Landing() {
           </p>
         </div>
 
-        <div className="mt-8 space-y-3">
-          <ValueProp icon={Users} title="Play together" desc="Pass the phone, take turns answering" />
-          <ValueProp icon={Sparkles} title="Reveal together" desc="See your partner's choices side-by-side" />
-          <ValueProp icon={TrendingUp} title="Grow together" desc="Get honest insights, not scores" />
+        <div className="mt-8 grid grid-cols-2 gap-3">
+          <ValueProp icon={Users} title="Discover Together" desc="Pass the phone, take turns" />
+          <ValueProp icon={MessagesSquare} title="Real Conversations" desc="Beyond small talk" />
+          <ValueProp icon={Heart} title="Understand Better" desc="See each other clearly" />
+          <ValueProp icon={Target} title="Build Clarity" desc="Insights, not scores" />
         </div>
 
         <motion.button
