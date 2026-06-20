@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Lightbulb, RotateCcw, Lock, CheckCircle2, Sparkles } from "lucide-react";
-import { LEVEL_2_CATEGORIES } from "../data/content";
+import { LEVEL_2_CATEGORIES, BLIND_LABELS } from "../data/content";
 import { useGame } from "../store/gameStore";
 import { TurnIndicator, Avatar } from "../components/TurnIndicator";
 
@@ -164,14 +164,17 @@ export function Level2Category() {
 export function Level2Cards() {
   const { state, dispatch } = useGame();
   const cat = LEVEL_2_CATEGORIES.find(c => c.id === state.level2.selectedCategoryId);
-  const cards = cat.cards;
+  const usedSet = (state.level2.usedCards && state.level2.usedCards[cat.id]) || [];
+  // Build pool of unused card indices, preserve original order
+  const pool = cat.cards.map((_, i) => i).filter(i => !usedSet.includes(i));
+  const cards = pool.length > 0 ? pool : cat.cards.map((_, i) => i); // fallback if all used
   const [active, setActive] = useState(Math.floor(cards.length / 2));
   const [picking, setPicking] = useState(false);
 
   const onPick = () => {
     if (picking) return;
     setPicking(true);
-    setTimeout(() => dispatch({ type: "L2_CARD_PICKED", cardIndex: active }), 600);
+    setTimeout(() => dispatch({ type: "L2_CARD_PICKED", cardIndex: cards[active] }), 600);
   };
 
   return (
@@ -224,10 +227,10 @@ export function Level2Cards() {
                   style={{ backfaceVisibility: "hidden" }}
                 >
                   <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur flex items-center justify-center mb-3">
-                    <span className="text-3xl select-none" aria-hidden>{cat.glyph}</span>
+                    <span className="text-3xl select-none" aria-hidden>{BLIND_LABELS[i % 6].emoji}</span>
                   </div>
-                  <div className="text-xs font-bold tracking-widest uppercase opacity-80">KnowEm</div>
-                  <div className="mt-1 text-sm font-semibold opacity-90">Card {i + 1} of {cards.length}</div>
+                  <div className="text-xs font-bold tracking-widest uppercase opacity-80">#{i + 1} Blind Choice</div>
+                  <div className="mt-1 text-sm font-semibold opacity-90">Hidden until picked</div>
                   <div className="mt-4 px-3 py-1 rounded-full bg-white/15 text-[10px] font-bold tracking-wide">
                     TAP TO REVEAL
                   </div>
@@ -349,24 +352,33 @@ export function Level2Question() {
 }
 
 export function Level2Locked() {
-  const { dispatch } = useGame();
-  useEffect(() => {
-    const t = setTimeout(() => dispatch({ type: "L2_LOCKED_CONTINUE" }), 1500);
-    return () => clearTimeout(t);
-  }, [dispatch]);
+  const { state, dispatch } = useGame();
+  const next = state.currentPlayer === "A" ? state.players.B : state.players.A;
   return (
-    <div className="flex-1 flex items-center justify-center px-6" data-testid="l2-locked-screen">
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="w-full bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] rounded-3xl p-8 text-center text-white shadow-[0_30px_60px_-20px_rgba(124,58,237,0.5)]"
-      >
-        <div className="w-16 h-16 mx-auto rounded-full bg-white/15 flex items-center justify-center">
-          <Lock size={28} className="text-white" />
-        </div>
-        <h3 className="mt-4 text-2xl font-black">Answer locked</h3>
-        <p className="mt-2 text-sm text-white/80">Pass the phone…</p>
-      </motion.div>
+    <div className="flex-1 flex flex-col px-5 pb-6" data-testid="l2-locked-screen">
+      <div className="flex-1 flex items-center justify-center">
+        <motion.div initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", bounce: 0.4 }}
+          className="w-full rounded-[28px] p-8 text-center text-white relative overflow-hidden shadow-[0_30px_60px_-20px_rgba(108,59,255,0.5)]"
+          style={{ background: "linear-gradient(135deg,#6C3BFF 0%,#FF3CAC 100%)" }}>
+          <motion.div animate={{ scale: [1, 1.08, 1] }} transition={{ duration: 2, repeat: Infinity }}
+            className="w-20 h-20 mx-auto rounded-full bg-white/15 backdrop-blur flex items-center justify-center">
+            <Lock size={32} className="text-white" strokeWidth={2.5} />
+          </motion.div>
+          <div className="mt-5 inline-flex items-center gap-1.5 bg-white/15 backdrop-blur px-3 py-1 rounded-full text-xs font-bold">
+            ✓ Answer Locked
+          </div>
+          <h3 className="mt-4 text-2xl font-black" style={{ fontFamily: "'Outfit', sans-serif" }}>Pass the device</h3>
+          <p className="mt-1 text-sm text-white/85">to {next.name}</p>
+        </motion.div>
+      </div>
+      <motion.button
+        data-testid="l2-pass-device-btn"
+        onClick={() => dispatch({ type: "L2_LOCKED_CONTINUE" })}
+        whileTap={{ scale: 0.97 }} whileHover={{ scale: 1.02 }}
+        className="w-full py-4 rounded-full bg-[#1A0B2E] text-white font-bold text-lg inline-flex items-center justify-center gap-2">
+        Pass Device <ArrowRight size={18} />
+      </motion.button>
     </div>
   );
 }

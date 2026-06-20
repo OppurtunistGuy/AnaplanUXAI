@@ -20,6 +20,7 @@ const initialState = {
     cardIndex: 0,
     answers: [], // [{categoryId, cardIndex, prompt, A, B}]
     currentRoundA: null,
+    usedCards: {}, // { [categoryId]: [cardIndex,...] }
   },
   sessionStatus: "active",
 };
@@ -142,7 +143,9 @@ function reducer(state, action) {
           A: state.level2.currentRoundA,
           B: action.text,
         }];
-        return { ...state, level2: { ...state.level2, answers: newAnswers, currentRoundA: null }, phase: "l2-both", currentPlayer: "A" };
+        const used = { ...state.level2.usedCards };
+        used[state.level2.selectedCategoryId] = [...(used[state.level2.selectedCategoryId] || []), state.level2.cardIndex];
+        return { ...state, level2: { ...state.level2, answers: newAnswers, currentRoundA: null, usedCards: used }, phase: "l2-both", currentPlayer: "A" };
       }
     }
 
