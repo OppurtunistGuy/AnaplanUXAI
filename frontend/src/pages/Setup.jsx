@@ -12,15 +12,23 @@ export default function Setup() {
   const [a, setA] = useState("");
   const [b, setB] = useState("");
 
-  const canStart = a.trim().length > 0 && b.trim().length > 0;
+  const trimmedA = a.trim();
+  const trimmedB = b.trim();
+  let error = "";
+  if (trimmedA && trimmedB) {
+    if (trimmedA.length < 2 || trimmedB.length < 2) error = "Names must be at least 2 characters.";
+    else if (trimmedA.length > 20 || trimmedB.length > 20) error = "Names must be 20 characters or less.";
+    else if (trimmedA.toLowerCase() === trimmedB.toLowerCase()) error = "Each player must use a unique name.";
+  }
+  const canStart = trimmedA.length >= 2 && trimmedB.length >= 2 && !error;
 
   const start = () => {
     if (!canStart) return;
     dispatch({
       type: "SET_PLAYERS",
       players: {
-        A: { name: a.trim(), avatar: "A" },
-        B: { name: b.trim(), avatar: "B" },
+        A: { name: trimmedA, avatar: "A" },
+        B: { name: trimmedB, avatar: "B" },
       },
     });
   };
@@ -74,6 +82,11 @@ export default function Setup() {
       </div>
 
       <div className="relative mt-auto px-6 pb-8 pt-8">
+        {error && (
+          <div data-testid="setup-error" className="mb-3 text-center text-sm font-semibold text-[#FF3CAC]">
+            {error}
+          </div>
+        )}
         <motion.button
           data-testid="setup-start-btn"
           onClick={start}

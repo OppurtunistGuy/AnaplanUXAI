@@ -52,9 +52,15 @@ const SCREENS = {
 export default function Game() {
   const { state } = useGame();
   const Component = SCREENS[state.phase] || Landing;
+  // P3: Unique key per question + player ensures full unmount between turns
+  const keyId = state.phase === "l1-question"
+    ? `l1q-${state.level1.questionIndex}-${state.currentPlayer}`
+    : state.phase === "l2-question"
+    ? `l2q-${state.level2.answers.length}-${state.currentPlayer}`
+    : state.phase;
   return (
     <PageBackdrop>
-      <PhoneShell keyId={state.phase}>
+      <PhoneShell keyId={keyId}>
         <Component />
       </PhoneShell>
     </PageBackdrop>

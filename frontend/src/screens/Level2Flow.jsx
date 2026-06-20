@@ -115,6 +115,11 @@ export function Level2Dice() {
 export function Level2Category() {
   const { state, dispatch } = useGame();
   const cat = LEVEL_2_CATEGORIES.find(c => c.id === state.level2.selectedCategoryId);
+  // P4: Auto-advance to deck after 2s (no Show Cards button)
+  useEffect(() => {
+    const t = setTimeout(() => dispatch({ type: "L2_CATEGORY_CONTINUE" }), 2000);
+    return () => clearTimeout(t);
+  }, [dispatch]);
   return (
     <div className="flex-1 flex flex-col items-center px-6 pt-8 pb-6 text-center" data-testid="l2-category-screen">
       <div className="text-[#7C3AED] text-xs font-bold tracking-widest uppercase mb-3">Category revealed</div>
@@ -147,16 +152,14 @@ export function Level2Category() {
         </motion.h2>
       </motion.div>
       <p className="mt-6 text-[#4B3B60] text-sm max-w-xs">
-        Let's dive deeper. Pick a card.
+        Let's dive deeper. Cards coming up…
       </p>
-      <motion.button
-        data-testid="l2-category-continue-btn"
-        onClick={() => dispatch({ type: "L2_CATEGORY_CONTINUE" })}
-        whileTap={{ scale: 0.97 }}
-        className="mt-auto w-full py-4 rounded-full bg-[#7C3AED] text-white font-bold text-lg shadow-[0_20px_40px_-15px_rgba(124,58,237,0.5)] inline-flex items-center justify-center gap-2"
-      >
-        Show cards <ArrowRight size={18} />
-      </motion.button>
+      <div className="mt-auto mb-2 w-full flex justify-center">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-[#7C3AED]">
+          <motion.span animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, repeat: Infinity }}>●</motion.span>
+          Preparing your deck
+        </div>
+      </div>
     </div>
   );
 }
