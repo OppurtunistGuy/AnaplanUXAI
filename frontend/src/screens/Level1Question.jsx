@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import * as LucideIcons from "lucide-react";
 import { SkipForward, Lightbulb, X, Check } from "lucide-react";
@@ -26,19 +26,37 @@ export default function Level1Question() {
   const [selected, setSelected] = useState(null);
   const [showHint, setShowHint] = useState(false);
   const [exitConfirm, setExitConfirm] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const isTransitioning = useRef(false);
+  
+  // P1 Fix: Hide question content briefly on mount to prevent preview during transitions
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 350); // Wait for transition animation to complete
+    return () => clearTimeout(timer);
+  }, [questionIndex, player]);
 
-  // Reset state on question / player change
+  // Reset state on question / player change, clear transition flag on unmount
   useEffect(() => {
     setSeconds(TIMER_SECONDS);
     setSelected(null);
     setShowHint(false);
+    isTransitioning.current = false;
+    
+    return () => {
+      isTransitioning.current = false;
+    };
   }, [questionIndex, player]);
 
   // Timer
   useEffect(() => {
     if (!q || selected) return;
     if (seconds <= 0) {
-      dispatch({ type: "L1_ANSWER", choice: "timeout" });
+      if (!isTransitioning.current) {
+        isTransitioning.current = true;
+        dispatch({ type: "L1_ANSWER", choice: "timeout" });
+      }
       return;
     }
     const t = setTimeout(() => setSeconds(s => s - 1), 1000);
@@ -48,17 +66,38 @@ export default function Level1Question() {
   // Auto-lock 1s after selection
   useEffect(() => {
     if (!selected) return;
-    const t = setTimeout(() => dispatch({ type: "L1_ANSWER", choice: selected }), 1000);
+    const t = setTimeout(() => {
+      dispatch({ type: "L1_ANSWER", choice: selected });
+    }, 1000);
     return () => clearTimeout(t);
   }, [selected, dispatch]);
 
   if (!q) return null;
+  
+  // P1 Fix: Hide content during transition to prevent question preview
+  if (!isVisible) {
+    return (
+      <div className="flex flex-col flex-1 items-center justify-center">
+        <div className="text-sm text-[#9CA3AF]">Loading...</div>
+      </div>
+    );
+  }
 
   const skipsLeft = 3 - (skipsUsed[player] || 0);
-  const pick = (choice) => { if (!selected) setSelected(choice); };
-  const skip = () => { if (skipsLeft > 0 && !selected) dispatch({ type: "L1_ANSWER", choice: "skip" }); };
+  const pick = (choice) => {
+    if (!selected && !isTransitioning.current) {
+      isTransitioning.current = true;
+      setSelected(choice);
+    }
+  };
+  const skip = () => {
+    if (skipsLeft > 0 && !selected && !isTransitioning.current) {
+      isTransitioning.current = true;
+      dispatch({ type: "L1_ANSWER", choice: "skip" });
+    }
+  };
 
-  const progress = ((questionIndex) / LEVEL_1_QUESTIONS.length) * 100;
+  const progress = ((questionIndex + 1) / LEVEL_1_QUESTIONS.length) * 100;
   const timerPct = (seconds / TIMER_SECONDS) * 100;
 
   return (

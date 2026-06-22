@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Lock, Gift, ArrowLeft } from "lucide-react";
+import { Lock, Gift, ArrowLeft, ArrowRight } from "lucide-react";
 import { useGame } from "../store/gameStore";
 
 export function Level3Teaser() {
@@ -54,20 +54,22 @@ export function Level3Teaser() {
           </div>
         </motion.div>
 
-        <div className="mt-10 px-6 py-3 rounded-full bg-white/10 backdrop-blur border border-white/20 inline-block">
-          <span className="text-white font-bold text-sm tracking-wide">Coming Soon</span>
-        </div>
-
         <p className="mt-6 text-white/70 text-sm max-w-xs leading-relaxed">
-          More intimate questions.<br />
-          More real conversations.<br />
-          Stronger connection.
+          Intimate questions. Dares. Truths.<br />
+          Pass the phone. Discover more.<br />
+          Real connection awaits.
         </p>
 
-        <div className="mt-8 inline-flex items-center gap-2 text-white/60 text-xs">
-          <Gift size={14} />
-          <span>Stay tuned</span>
-        </div>
+        <motion.button
+          data-testid="l3-start-btn"
+          onClick={() => dispatch({ type: "GO", phase: "l3-consent" })}
+          whileTap={{ scale: 0.97 }}
+          whileHover={{ scale: 1.02 }}
+          className="mt-8 w-full max-w-xs py-4 rounded-full text-white font-bold text-lg shadow-[0_20px_40px_-15px_rgba(255,60,172,0.5)] inline-flex items-center justify-center gap-2"
+          style={{ background: "linear-gradient(135deg,#6C3BFF,#FF3CAC)" }}
+        >
+          Continue to Level 3 <ArrowRight size={18} />
+        </motion.button>
       </div>
     </div>
   );

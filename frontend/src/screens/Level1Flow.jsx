@@ -1,14 +1,28 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Heart, Sparkles, Stars } from "lucide-react";
 import { useGame } from "../store/gameStore";
 import { Avatar } from "../components/TurnIndicator";
 import { LEVEL_1_QUESTIONS } from "../data/content";
 
-// State 3: Answer Locked — manual Pass Device button, mascot, floating hearts
+// State 3: Answer Locked — auto-advance after 2.5s, manual Pass Device button, mascot, floating hearts
 export function Level1Locked() {
   const { state, dispatch } = useGame();
   const next = state.currentPlayer === "A" ? state.players.B : state.players.A;
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Auto-advance after 2.5s (user can tap "Pass Device" to skip)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setIsTransitioning(prev => {
+        if (prev) return prev; // Already transitioning, don't dispatch again
+        dispatch({ type: "L1_LOCKED_CONTINUE" });
+        return true;
+      });
+    }, 2500);
+    return () => clearTimeout(t);
+  }, [dispatch]); // Mount-only: timer should only be set up once
+
   return (
     <div className="flex-1 flex flex-col px-5 pb-6" data-testid="l1-locked-screen">
       <div className="flex-1 flex items-center justify-center">
@@ -40,7 +54,12 @@ export function Level1Locked() {
       </div>
       <motion.button
         data-testid="l1-pass-device-btn"
-        onClick={() => dispatch({ type: "L1_LOCKED_CONTINUE" })}
+        onClick={() => {
+          if (!isTransitioning) {
+            setIsTransitioning(true);
+            dispatch({ type: "L1_LOCKED_CONTINUE" });
+          }
+        }}
         whileTap={{ scale: 0.97 }} whileHover={{ scale: 1.02 }}
         className="w-full py-4 rounded-full bg-[#1A0B2E] text-white font-bold text-lg shadow-[0_20px_40px_-15px_rgba(26,11,46,0.4)] inline-flex items-center justify-center gap-2">
         Pass Device <ArrowRight size={18} />
@@ -52,16 +71,21 @@ export function Level1Locked() {
 // State 4: Partner Turn handoff
 export function Level1Handoff() {
   const { state, dispatch } = useGame();
-  const next = state.players[state.currentPlayer];
+  const nextPlayer = state.currentPlayer === "A" ? state.players.B : state.players.A;
+  
+  // P0.2 Fix: Capture player name once on mount using useRef to prevent instability
+  const handoffPlayerNameRef = useRef(nextPlayer.name);
+  const displayName = handoffPlayerNameRef.current;
+  
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 text-center" data-testid="l1-handoff-screen">
       <motion.div initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", bounce: 0.4 }}>
-        <Avatar player={state.currentPlayer} name={next.name} size={96} />
+        <Avatar player={state.currentPlayer} name={displayName} size={96} />
       </motion.div>
       <div className="mt-6 text-[#6C3BFF] text-xs font-bold tracking-widest uppercase">Partner's Turn</div>
       <h2 className="mt-2 text-3xl font-black text-[#1A0B2E] leading-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>
-        Your turn, <span className="text-[#FF3CAC]">{next.name}</span>
+        Your turn, <span className="text-[#FF3CAC]">{displayName}</span>
       </h2>
       <p className="mt-3 text-[#4B3B60] text-sm max-w-xs">
         Same question. Answer privately — no peeking.
@@ -82,11 +106,16 @@ export function Level1BothAnswered({ final = false }) {
   const last = state.level1.answers[idx];
   const matched = last && last.A === last.B && (last.A === "a" || last.A === "b");
   const q = LEVEL_1_QUESTIONS[idx];
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => {
-      if (final) dispatch({ type: "GO", phase: "l1-complete" });
-      else dispatch({ type: "L1_BOTH_NEXT" });
+      setIsTransitioning(prev => {
+        if (prev) return prev; // Already transitioning, don't dispatch again
+        if (final) dispatch({ type: "GO", phase: "l1-complete" });
+        else dispatch({ type: "L1_BOTH_NEXT" });
+        return true;
+      });
     }, 2000);
     return () => clearTimeout(t);
   }, [dispatch, final]);

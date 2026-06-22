@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Lightbulb, RotateCcw, Lock, CheckCircle2, Sparkles } from "lucide-react";
 import { LEVEL_2_CATEGORIES, BLIND_LABELS } from "../data/content";
@@ -59,6 +59,7 @@ export function Level2Dice() {
     setTarget({ ry: finalRy, rx: finalRx });
     setTimeout(() => {
       dispatch({ type: "L2_DICE_ROLLED", categoryId: cat.id });
+      setRolling(false);
     }, 1400);
   };
 
@@ -115,11 +116,29 @@ export function Level2Dice() {
 export function Level2Category() {
   const { state, dispatch } = useGame();
   const cat = LEVEL_2_CATEGORIES.find(c => c.id === state.level2.selectedCategoryId);
-  // P4: Auto-advance to deck after 2s (no Show Cards button)
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  
+  // P4: Auto-advance to deck after 1.5s (reduced from 2s)
   useEffect(() => {
-    const t = setTimeout(() => dispatch({ type: "L2_CATEGORY_CONTINUE" }), 2000);
+    const t = setTimeout(() => {
+      setIsTransitioning(prev => {
+        if (prev) return prev; // Already transitioning, don't dispatch again
+        dispatch({ type: "L2_CATEGORY_CONTINUE" });
+        return true;
+      });
+    }, 1500);
     return () => clearTimeout(t);
-  }, [dispatch]);
+  }, [dispatch]); // Mount-only: timer should only be set up once
+
+  // Defensive: if no category found (e.g. after refresh with incomplete state), redirect to dice
+  if (!cat) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center px-6 text-center" data-testid="l2-category-screen">
+        <p className="text-sm text-[#4B3B60]">Category not found. Rolling again...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 flex flex-col items-center px-6 pt-8 pb-6 text-center" data-testid="l2-category-screen">
       <div className="text-[#7C3AED] text-xs font-bold tracking-widest uppercase mb-3">Category revealed</div>
@@ -167,12 +186,22 @@ export function Level2Category() {
 export function Level2Cards() {
   const { state, dispatch } = useGame();
   const cat = LEVEL_2_CATEGORIES.find(c => c.id === state.level2.selectedCategoryId);
+  const [active, setActive] = useState(0);
+  const [picking, setPicking] = useState(false);
+
+  // Defensive: if no category found (e.g. after refresh with incomplete state), show empty state
+  if (!cat) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center px-6 text-center" data-testid="l2-cards-screen">
+        <p className="text-sm text-[#4B3B60]">Session data unavailable. Please restart.</p>
+      </div>
+    );
+  }
+
   const usedSet = (state.level2.usedCards && state.level2.usedCards[cat.id]) || [];
   // Build pool of unused card indices, preserve original order
   const pool = cat.cards.map((_, i) => i).filter(i => !usedSet.includes(i));
   const cards = pool.length > 0 ? pool : cat.cards.map((_, i) => i); // fallback if all used
-  const [active, setActive] = useState(Math.floor(cards.length / 2));
-  const [picking, setPicking] = useState(false);
 
   const onPick = () => {
     if (picking) return;
@@ -279,10 +308,18 @@ export function Level2Cards() {
 
 export function Level2CardFlip() {
   const { dispatch } = useGame();
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  
   useEffect(() => {
-    const t = setTimeout(() => dispatch({ type: "L2_CARD_REVEALED" }), 1400);
+    const t = setTimeout(() => {
+      setIsTransitioning(prev => {
+        if (prev) return prev; // Already transitioning, don't dispatch again
+        dispatch({ type: "L2_CARD_REVEALED" });
+        return true;
+      });
+    }, 800);
     return () => clearTimeout(t);
-  }, [dispatch]);
+  }, [dispatch]); // Mount-only: timer should only be set up once
   return (
     <div className="flex-1 flex items-center justify-center px-6" data-testid="l2-flip-screen">
       <motion.div
@@ -299,9 +336,19 @@ export function Level2CardFlip() {
 export function Level2Question() {
   const { state, dispatch } = useGame();
   const cat = LEVEL_2_CATEGORIES.find(c => c.id === state.level2.selectedCategoryId);
+  const [text, setText] = useState("");
+
+  // Defensive: if no category found (e.g. after refresh with incomplete state), show empty state
+  if (!cat) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center px-6 text-center" data-testid="l2-question-screen">
+        <p className="text-sm text-[#4B3B60]">Session data unavailable. Please restart.</p>
+      </div>
+    );
+  }
+
   const prompt = cat.cards[state.level2.cardIndex];
   const player = state.currentPlayer;
-  const [text, setText] = useState("");
 
   const submit = () => {
     if (text.trim().length === 0) return;
@@ -357,6 +404,20 @@ export function Level2Question() {
 export function Level2Locked() {
   const { state, dispatch } = useGame();
   const next = state.currentPlayer === "A" ? state.players.B : state.players.A;
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Auto-advance after 2.5s (user can tap "Pass Device" to skip)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setIsTransitioning(prev => {
+        if (prev) return prev; // Already transitioning, don't dispatch again
+        dispatch({ type: "L2_LOCKED_CONTINUE" });
+        return true;
+      });
+    }, 2500);
+    return () => clearTimeout(t);
+  }, [dispatch]); // Mount-only: timer should only be set up once
+
   return (
     <div className="flex-1 flex flex-col px-5 pb-6" data-testid="l2-locked-screen">
       <div className="flex-1 flex items-center justify-center">
@@ -377,7 +438,12 @@ export function Level2Locked() {
       </div>
       <motion.button
         data-testid="l2-pass-device-btn"
-        onClick={() => dispatch({ type: "L2_LOCKED_CONTINUE" })}
+        onClick={() => {
+          if (!isTransitioning) {
+            setIsTransitioning(true);
+            dispatch({ type: "L2_LOCKED_CONTINUE" });
+          }
+        }}
         whileTap={{ scale: 0.97 }} whileHover={{ scale: 1.02 }}
         className="w-full py-4 rounded-full bg-[#1A0B2E] text-white font-bold text-lg inline-flex items-center justify-center gap-2">
         Pass Device <ArrowRight size={18} />
@@ -388,13 +454,18 @@ export function Level2Locked() {
 
 export function Level2Handoff() {
   const { state, dispatch } = useGame();
-  const next = state.players[state.currentPlayer];
+  const nextPlayer = state.players[state.currentPlayer];
+  
+  // P0.2 Fix: Capture player name once on mount using useRef to prevent instability
+  const handoffPlayerNameRef = useRef(nextPlayer.name);
+  const displayName = handoffPlayerNameRef.current;
+  
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 text-center" data-testid="l2-handoff-screen">
-      <Avatar player={state.currentPlayer} name={next.name} size={96} />
+      <Avatar player={state.currentPlayer} name={displayName} size={96} />
       <div className="mt-6 text-[#E91E63] text-xs font-bold tracking-widest uppercase">Handoff</div>
       <h2 className="mt-2 text-3xl font-black text-[#1A0B2E] leading-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>
-        Pass to <span className="text-[#E91E63]">{next.name}</span>
+        Pass to <span className="text-[#E91E63]">{displayName}</span>
       </h2>
       <p className="mt-3 text-[#4B3B60] text-sm max-w-xs">
         Same card. No timer. Take your time, write what's real.
@@ -414,6 +485,9 @@ export function Level2Handoff() {
 export function Level2BothAnswered() {
   const { state, dispatch } = useGame();
   const last = state.level2.answers[state.level2.answers.length - 1];
+  const roundCount = state.level2.answers.length;
+  const canFinish = roundCount >= 3;
+
   return (
     <div className="flex-1 flex flex-col px-6 pt-6 pb-6" data-testid="l2-both-screen">
       <div className="text-center mb-4">
@@ -429,7 +503,7 @@ export function Level2BothAnswered() {
         <RevealCard player="B" name={state.players.B.name} text={last?.B} />
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-3">
+      <div className="mt-4 grid gap-3" style={{ gridTemplateColumns: canFinish ? "1fr 1fr" : "1fr" }}>
         <motion.button
           data-testid="l2-roll-again-btn"
           onClick={() => dispatch({ type: "L2_ROLL_AGAIN" })}
@@ -439,14 +513,26 @@ export function Level2BothAnswered() {
           <RotateCcw size={16} />
           Roll again
         </motion.button>
-        <motion.button
-          data-testid="l2-insights-btn"
-          onClick={() => dispatch({ type: "GO_INSIGHTS" })}
-          whileTap={{ scale: 0.97 }}
-          className="py-3 rounded-full bg-[#7C3AED] text-white font-bold"
-        >
-          See insights
-        </motion.button>
+        {canFinish && (
+          <motion.button
+            data-testid="l2-finish-btn"
+            onClick={() => dispatch({ type: "L2_COMPLETE" })}
+            whileTap={{ scale: 0.97 }}
+            className="py-3 rounded-full bg-[#7C3AED] text-white font-bold"
+          >
+            Finish Level 2
+          </motion.button>
+        )}
+        {!canFinish && (
+          <motion.button
+            data-testid="l2-insights-btn"
+            onClick={() => dispatch({ type: "GO_INSIGHTS" })}
+            whileTap={{ scale: 0.97 }}
+            className="py-3 rounded-full bg-[#7C3AED] text-white font-bold"
+          >
+            See insights
+          </motion.button>
+        )}
       </div>
     </div>
   );
@@ -461,3 +547,64 @@ const RevealCard = ({ player, name, text }) => (
     <p className="text-sm text-[#4B3B60] leading-relaxed">{text}</p>
   </div>
 );
+
+export function Level2Complete() {
+  const { dispatch } = useGame();
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center px-6 text-center" data-testid="l2-complete-screen">
+      <motion.div
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: "spring", bounce: 0.5, delay: 0.1 }}
+        className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-[#7C3AED] to-[#E91E63] flex items-center justify-center shadow-lg"
+      >
+        <CheckCircle2 size={40} className="text-white" strokeWidth={2} />
+      </motion.div>
+
+      <motion.h2
+        initial={{ y: 10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="mt-6 text-3xl font-black text-[#1A0B2E]"
+        style={{ fontFamily: "'Outfit', sans-serif" }}
+      >
+        Level 2 Complete
+      </motion.h2>
+
+      <motion.p
+        initial={{ y: 10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.3 }}
+        className="mt-2 text-[#4B3B60] text-sm max-w-xs"
+      >
+        You dove deeper together. Ready to discover what it all means?
+      </motion.p>
+
+      <div className="mt-12 w-full space-y-3">
+        <motion.button
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          onClick={() => dispatch({ type: "GO_INSIGHTS" })}
+          whileTap={{ scale: 0.97 }}
+          whileHover={{ scale: 1.02 }}
+          className="w-full py-4 rounded-full bg-[#7C3AED] text-white font-bold text-lg shadow-[0_20px_40px_-15px_rgba(124,59,237,0.5)]"
+        >
+          See Insights
+        </motion.button>
+
+        <motion.button
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          onClick={() => dispatch({ type: "L2_ROLL_AGAIN" })}
+          whileTap={{ scale: 0.97 }}
+          whileHover={{ scale: 1.02 }}
+          className="w-full py-4 rounded-full border-2 border-[#E5E7EB] text-[#4B3B60] font-bold text-lg"
+        >
+          One More Round
+        </motion.button>
+      </div>
+    </div>
+  );
+}

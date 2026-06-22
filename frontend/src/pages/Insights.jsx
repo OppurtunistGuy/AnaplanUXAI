@@ -21,21 +21,39 @@ const ARCHETYPE_INFO = {
 
 function computeMetrics(state) {
   const l1 = state.level1.answers.filter(Boolean);
-  const total = l1.length || 1;
-  const matches = l1.filter(a => a.A === a.B && (a.A === "a" || a.A === "b")).length;
   const skipsA = state.level1.skipsUsed?.A || 0;
   const skipsB = state.level1.skipsUsed?.B || 0;
   const totalSkips = skipsA + skipsB;
   const l2 = state.level2.answers || [];
 
   const dim = { shared: { m: 0, t: 0 }, communication: { m: 0, t: 0 }, lifestyle: { m: 0, t: 0 }, growth: { m: 0, t: 0 } };
+  let validAnswerPairs = 0; // Track questions where at least one player gave a real answer
+  let realMatches = 0; // Track matches between real (non-skip, non-timeout) answers
+  
   l1.forEach(a => {
     const q = LEVEL_1_QUESTIONS.find(x => x.id === a.qid);
     if (!q) return;
     const d = CHIP_TO_DIM[q.chip] || "shared";
+    
+    // Check if answers are real (not skip/timeout)
+    const aIsReal = a.A === "a" || a.A === "b";
+    const bIsReal = a.B === "a" || a.B === "b";
+    
+    // Exclude if both players skipped or timed out
+    if (!aIsReal && !bIsReal) return;
+    
     dim[d].t += 1;
-    if (a.A === a.B) dim[d].m += 1;
+    validAnswerPairs += 1;
+    
+    // Count match only if both gave real answers AND they match
+    if (a.A === a.B && aIsReal && bIsReal) {
+      dim[d].m += 1;
+      realMatches += 1;
+    }
   });
+  
+  const total = validAnswerPairs || 1;
+  const matches = realMatches;
 
   const pct = (k) => dim[k].t === 0 ? null : Math.round((dim[k].m / dim[k].t) * 100);
   const sharedPct = pct("shared");

@@ -75,7 +75,7 @@ export default function Landing() {
 
         <motion.button
           data-testid="home-start-btn"
-          onClick={() => go("setup")}
+          onClick={() => go("mode-select")}
           whileTap={{ scale: 0.97 }}
           whileHover={{ scale: 1.02 }}
           className="mt-8 w-full py-4 rounded-full bg-[#E91E63] hover:bg-[#C2185B] text-white font-bold text-lg shadow-[0_20px_40px_-15px_rgba(233,30,99,0.5)] transition-colors"

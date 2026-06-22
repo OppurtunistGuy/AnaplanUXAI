@@ -1,80 +1,115 @@
-// KnowEm — Level 3 content (Truth or Dare deck)
+// KnowEm — Level 3 content (20-card Tiered Deck)
 // Isolated, additive module: does not modify or import from Level 1/2 content.
+// Pool structure: Truth/Dare (1-7), Teasing/Banter (8-10), Hot Layer (11-20)
 
-// Cards 1–5: Chemistry
-const CHEMISTRY = [
-  "Biggest Turn-On?",
-  "Instant Chemistry?",
-  "Green Flag?",
-  "Love Language?",
-  "Flirting Style?",
+// Pool 1: Truth & Dare (Cards 1–7) — Free-text input required
+const TRUTH_DARE = [
+  { prompt: "What's something you've never admitted to anyone?", type: "truth" },
+  { prompt: "Dare you to describe your ideal date night in detail.", type: "dare" },
+  { prompt: "When did you first know you were attracted to me?", type: "truth" },
+  { prompt: "Dare you to tell me something you find irresistible about me.", type: "dare" },
+  { prompt: "What's your biggest fear about our relationship?", type: "truth" },
+  { prompt: "Dare you to whisper something you wish we could do together.", type: "dare" },
+  { prompt: "What do you think I don't understand about you?", type: "truth" },
 ];
 
-// Cards 6–10: Teasing
-const TEASING = [
-  "Chase or Be Chased?",
-  "Eye Contact?",
-  "Dirty Talk?",
-  "Tease or Direct?",
-  "First Move?",
+// Pool 2: Teasing & Banter (Cards 8–10) — Free-text input required
+const TEASING_BANTER = [
+  { prompt: "What's the most mischievous thing you'd like to try with me?", type: "dare" },
+  { prompt: "Dare you to describe how you'd seduce me.", type: "dare" },
+  { prompt: "What's a playful fantasy you've had about us?", type: "truth" },
 ];
 
-// Cards 11–20: Fantasy & Desire — pool of 15, 10 are sampled per session (no repeats within a session)
-const FANTASY_POOL = [
-  "Hidden Fantasy?",
-  "Roleplay?",
-  "Public Romance?",
-  "Secret Desire?",
-  "Power Dynamic?",
-  "Bucket List?",
-  "Risky Date?",
-  "Dream Scenario?",
-  "Control or Surrender?",
-  "Morning or Midnight?",
-  "Curious To Try?",
-  "Romantic Obsession?",
-  "Favorite Tension?",
-  "Untold Desire?",
-  "What If?",
+// Pool 3: Hot Layer (15 prompts, sampled 10 per session) — No input; reaction-based only
+const HOT_LAYER_PROMPTS = [
+  { prompt: "I want you right now.", type: "hot" },
+  { prompt: "You're the most attractive person I know.", type: "hot" },
+  { prompt: "I fantasize about you.", type: "hot" },
+  { prompt: "I want to try something we've never done.", type: "hot" },
+  { prompt: "I find your confidence irresistible.", type: "hot" },
+  { prompt: "I want to feel your touch.", type: "hot" },
+  { prompt: "You drive me crazy in the best way.", type: "hot" },
+  { prompt: "I want to explore intimacy with you.", type: "hot" },
+  { prompt: "You're all I think about.", type: "hot" },
+  { prompt: "I desire you completely.", type: "hot" },
+  { prompt: "Your presence alone excites me.", type: "hot" },
+  { prompt: "I love the way you move.", type: "hot" },
+  { prompt: "You make me feel alive.", type: "hot" },
+  { prompt: "I crave your attention.", type: "hot" },
+  { prompt: "You're my perfect match.", type: "hot" },
 ];
 
+function sampleWithoutReplacement(arr, n) {
+  const copy = [...arr];
+  const result = [];
+  for (let i = 0; i < n && copy.length > 0; i++) {
+    const idx = Math.floor(Math.random() * copy.length);
+    result.push(copy[idx]);
+    copy.splice(idx, 1);
+  }
+  return result;
+}
+
+// Category groups displayed on the Level 3 category selection screen.
+// Each group has an emoji, display name, and accent color.
 export const LEVEL_3_GROUPS = {
-  chemistry: { name: "Chemistry", emoji: "💫", prompts: CHEMISTRY },
-  teasing: { name: "Teasing", emoji: "😈", prompts: TEASING },
-  fantasy: { name: "Fantasy & Desire", emoji: "🔥", prompts: FANTASY_POOL },
+  "truth-dare": { emoji: "❤️", name: "Truth & Dare", color: "#FF3CAC" },
+  "teasing": { emoji: "😏", name: "Teasing & Banter", color: "#6C3BFF" },
+  "hot": { emoji: "🔥", name: "Hot Layer", color: "#E31C23" },
 };
 
 export const LEVEL_3_DECK_SIZE = 20;
 
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
 /**
- * Builds one session's 20-card deck:
- * - Cards 1–5 from Chemistry (fixed pool of 5)
- * - Cards 6–10 from Teasing (fixed pool of 5)
- * - Cards 11–20: 10 randomly sampled (no repeats) from the 15-prompt Fantasy & Desire pool
- * Each card gets a randomized Truth/Dare type (~50/50).
+ * Builds one session's 20-card linear deck:
+ * - Cards 1–7: Truth/Dare (free-text input)
+ * - Cards 8–10: Teasing/Banter (free-text input)
+ * - Cards 11–20: Hot Layer (10 of 15 prompts, sampled without replacement)
+ * - Pool order is preserved; no shuffling between pools
  */
 export function buildLevel3Deck() {
-  const fantasyTen = shuffle(FANTASY_POOL).slice(0, 10);
-  const prompts = [...CHEMISTRY, ...TEASING, ...fantasyTen];
+  const allCards = [];
+  let cardIndex = 1;
 
-  return prompts.map((prompt, i) => {
-    const groupKey = i < 5 ? "chemistry" : i < 10 ? "teasing" : "fantasy";
-    return {
-      id: `l3-c${i + 1}`,
-      prompt,
-      groupKey,
-      groupName: LEVEL_3_GROUPS[groupKey].name,
-      groupEmoji: LEVEL_3_GROUPS[groupKey].emoji,
-      type: Math.random() < 0.5 ? "truth" : "dare",
-    };
+  // Add Truth/Dare pool (1-7)
+  TRUTH_DARE.forEach((card) => {
+    allCards.push({
+      id: `l3-truth-dare-${cardIndex}`,
+      prompt: card.prompt,
+      type: card.type,
+      poolIndex: cardIndex,
+      groupKey: "truth-dare",
+      groupName: "Truth & Dare",
+    });
+    cardIndex++;
   });
+
+  // Add Teasing/Banter pool (8-10)
+  TEASING_BANTER.forEach((card) => {
+    allCards.push({
+      id: `l3-teasing-${cardIndex}`,
+      prompt: card.prompt,
+      type: card.type,
+      poolIndex: cardIndex,
+      groupKey: "teasing",
+      groupName: "Teasing & Banter",
+    });
+    cardIndex++;
+  });
+
+  // Add Hot Layer (11-20): sample 10 of 15 prompts without replacement
+  const sampledHotLayer = sampleWithoutReplacement(HOT_LAYER_PROMPTS, 10);
+  sampledHotLayer.forEach((card) => {
+    allCards.push({
+      id: `l3-hot-${cardIndex}`,
+      prompt: card.prompt,
+      type: card.type,
+      poolIndex: cardIndex,
+      groupKey: "hot",
+      groupName: "Hot Layer",
+    });
+    cardIndex++;
+  });
+
+  return allCards;
 }

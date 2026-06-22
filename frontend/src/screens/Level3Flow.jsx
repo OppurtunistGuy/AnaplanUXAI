@@ -51,9 +51,19 @@ export function Level3Consent() {
   );
 }
 
-// ---------- Screen 2: Level 3 Introduction ----------
+// ---------- Screen 2: Level 3 Introduction (merged with How It Works) ----------
+const STEPS = [
+  { n: 1, text: "A card appears — it's either Truth or Dare." },
+  { n: 2, text: "Answer honestly — share your real thoughts." },
+  { n: 3, text: "Pass the device to your partner." },
+  { n: 4, text: "Reveal & react — see both answers." },
+  { n: 5, text: "Complete 20 cards to unlock your connection insights." },
+];
+
 export function Level3Intro() {
   const { dispatch } = useGame();
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 text-center overflow-y-auto" data-testid="l3-intro-screen">
       <div className="text-[#FF3CAC] text-xs font-bold tracking-widest uppercase">Level 3</div>
@@ -69,9 +79,38 @@ export function Level3Intro() {
       <p className="mt-6 text-sm text-[#4B3B60] max-w-xs">
         20 questions. Truths, dares and fantasies to unlock your connection insights.
       </p>
+
+      {/* Collapsible How It Works section */}
+      <div className="mt-6 w-full max-w-xs">
+        <button
+          onClick={() => setShowHowItWorks(!showHowItWorks)}
+          className="flex items-center justify-center gap-2 text-sm font-semibold text-[#6C3BFF] hover:text-[#FF3CAC] transition-colors"
+        >
+          <ListChecks size={16} />
+          {showHowItWorks ? "Hide" : "Show"} how it works
+        </button>
+        {showHowItWorks && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-4 space-y-3 text-left"
+          >
+            {STEPS.map(s => (
+              <div key={s.n} className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-[#F3E8FF] text-[#6C3BFF] text-xs font-black flex items-center justify-center shrink-0 mt-0.5">
+                  {s.n}
+                </div>
+                <p className="text-sm text-[#4B3B60] leading-relaxed">{s.text}</p>
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </div>
+
       <motion.button data-testid="l3-intro-begin-btn" onClick={() => dispatch({ type: "L3_INTRO_CONTINUE" })}
         whileTap={{ scale: 0.97 }} whileHover={{ scale: 1.02 }}
-        className="mt-10 w-full max-w-xs py-4 rounded-full text-white font-bold text-lg shadow-[0_20px_40px_-15px_rgba(108,59,255,0.5)] inline-flex items-center justify-center gap-2"
+        className="mt-8 w-full max-w-xs py-4 rounded-full text-white font-bold text-lg shadow-[0_20px_40px_-15px_rgba(108,59,255,0.5)] inline-flex items-center justify-center gap-2"
         style={{ background: "linear-gradient(135deg,#6C3BFF,#FF3CAC)" }}>
         Let's Begin <ArrowRight size={18} />
       </motion.button>
@@ -79,45 +118,8 @@ export function Level3Intro() {
   );
 }
 
-// ---------- Screen 3: How It Works (optional quick reminder) ----------
-const STEPS = [
-  { n: 1, text: "A card appears — it's either Truth or Dare." },
-  { n: 2, text: "Answer honestly — share your real thoughts." },
-  { n: 3, text: "Pass the device to your partner." },
-  { n: 4, text: "Reveal & react — see both answers." },
-  { n: 5, text: "Complete 20 cards to unlock your connection insights." },
-];
-
-export function Level3HowItWorks() {
-  const { dispatch } = useGame();
-  return (
-    <div className="flex-1 flex flex-col items-center justify-center px-6 text-center overflow-y-auto" data-testid="l3-how-it-works-screen">
-      <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
-        style={{ background: "linear-gradient(135deg,#FCE4EC,#EDE9FE)" }}>
-        <ListChecks size={24} className="text-[#6C3BFF]" strokeWidth={2.5} />
-      </div>
-      <h2 className="mt-4 text-2xl font-black text-[#1A0B2E]" style={{ fontFamily: "'Outfit', sans-serif" }}>
-        How Level 3 Works
-      </h2>
-      <div className="mt-6 w-full max-w-xs space-y-4 text-left">
-        {STEPS.map(s => (
-          <div key={s.n} className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full bg-[#F3E8FF] text-[#6C3BFF] text-xs font-black flex items-center justify-center shrink-0 mt-0.5">
-              {s.n}
-            </div>
-            <p className="text-sm text-[#4B3B60] leading-relaxed">{s.text}</p>
-          </div>
-        ))}
-      </div>
-      <motion.button data-testid="l3-how-it-works-continue-btn" onClick={() => dispatch({ type: "L3_HOW_IT_WORKS_CONTINUE" })}
-        whileTap={{ scale: 0.97 }} whileHover={{ scale: 1.02 }}
-        className="mt-8 w-full max-w-xs py-4 rounded-full text-white font-bold text-lg shadow-[0_20px_40px_-15px_rgba(255,60,172,0.5)]"
-        style={{ background: "linear-gradient(135deg,#6C3BFF,#FF3CAC)" }}>
-        Got It
-      </motion.button>
-    </div>
-  );
-}
+// Note: Level3HowItWorks merged into Level3Intro (see above)
+// This screen is no longer used but kept for reference
 
 // ---------- Screen 4/5: Card back (hidden) -> tap to reveal Truth/Dare + prompt ----------
 export function Level3Card() {
@@ -225,11 +227,14 @@ export function Level3Question() {
   const [text, setText] = useState("");
 
   if (!card) return null;
+
+  const isHotLayer = card.poolIndex >= 11; // Cards 11-20 are Hot Layer (no input)
   const isTruth = card.type === "truth";
 
   const submit = () => {
-    if (text.trim().length === 0) return;
-    dispatch({ type: "L3_ANSWER", text: text.trim() });
+    if (!isHotLayer && text.trim().length === 0) return; // For non-Hot cards, require input
+    const answerText = isHotLayer ? "[reacted]" : text.trim(); // Hot Layer uses placeholder
+    dispatch({ type: "L3_ANSWER", text: answerText });
     setText("");
   };
 
@@ -238,9 +243,9 @@ export function Level3Question() {
       <div className="flex items-center justify-between mb-4">
         <span className="text-xs font-bold text-[#4B3B60]">Card {state.level3.cardIndex + 1} of {state.level3.deck.length}</span>
         <span className={`px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest ${
-          isTruth ? "bg-[#FCE4EC] text-[#FF3CAC]" : "bg-[#EDE9FE] text-[#6C3BFF]"
+          card.type === "truth" ? "bg-[#FCE4EC] text-[#FF3CAC]" : card.type === "dare" ? "bg-[#EDE9FE] text-[#6C3BFF]" : "bg-[#FFE4E6] text-[#E31C23]"
         }`}>
-          {isTruth ? "❤️ TRUTH" : "😈 DARE"}
+          {card.type === "truth" ? "❤️ TRUTH" : card.type === "dare" ? "😈 DARE" : "🔥 HOT"}
         </span>
       </div>
 
@@ -249,27 +254,48 @@ export function Level3Question() {
       </h2>
 
       <div className="mt-5 flex-1 flex flex-col">
-        <textarea
-          data-testid="l3-answer-input"
-          value={text}
-          onChange={(e) => setText(e.target.value.slice(0, 500))}
-          placeholder="Type your answer…"
-          className="w-full flex-1 min-h-[140px] bg-white rounded-2xl border-2 border-[#FBE7F3] focus:border-[#FF3CAC]/40 outline-none p-4 text-[#1A0B2E] resize-none"
-        />
-        <div className="mt-1 text-right text-xs text-[#9CA3AF]">{text.length}/500</div>
+        {!isHotLayer ? (
+          <>
+            <textarea
+              data-testid="l3-answer-input"
+              value={text}
+              onChange={(e) => setText(e.target.value.slice(0, 500))}
+              placeholder="Type your answer…"
+              className="w-full flex-1 min-h-[140px] bg-white rounded-2xl border-2 border-[#FBE7F3] focus:border-[#FF3CAC]/40 outline-none p-4 text-[#1A0B2E] resize-none"
+            />
+            <div className="mt-1 text-right text-xs text-[#9CA3AF]">{text.length}/500</div>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-center">
+            <p className="text-sm text-[#4B3B60]">Feel free to react or pass the device to your partner.</p>
+          </div>
+        )}
       </div>
 
-      <motion.button
-        data-testid="l3-submit-btn"
-        onClick={submit}
-        disabled={text.trim().length === 0}
-        whileTap={{ scale: text.trim().length === 0 ? 1 : 0.97 }}
-        className={`mt-4 w-full py-4 rounded-full font-bold text-lg shadow-[0_20px_40px_-15px_rgba(255,60,172,0.5)] ${
-          text.trim().length === 0 ? "bg-[#F3E8FF] text-[#9CA3AF]" : "bg-[#FF3CAC] text-white"
-        }`}
-      >
-        Submit Answer
-      </motion.button>
+      {!isHotLayer && (
+        <motion.button
+          data-testid="l3-submit-btn"
+          onClick={submit}
+          disabled={text.trim().length === 0}
+          whileTap={{ scale: text.trim().length === 0 ? 1 : 0.97 }}
+          className={`mt-4 w-full py-4 rounded-full font-bold text-lg shadow-[0_20px_40px_-15px_rgba(255,60,172,0.5)] ${
+            text.trim().length === 0 ? "bg-[#F3E8FF] text-[#9CA3AF]" : "bg-[#FF3CAC] text-white"
+          }`}
+        >
+          Submit Answer
+        </motion.button>
+      )}
+      
+      {isHotLayer && (
+        <motion.button
+          data-testid="l3-hot-continue-btn"
+          onClick={submit}
+          whileTap={{ scale: 0.97 }}
+          className="mt-4 w-full py-4 rounded-full bg-[#E31C23] text-white font-bold text-lg shadow-[0_20px_40px_-15px_rgba(227,28,35,0.5)]"
+        >
+          Pass to {state.currentPlayer === "A" ? state.players.B.name : state.players.A.name}
+        </motion.button>
+      )}
     </div>
   );
 }
@@ -278,6 +304,19 @@ export function Level3Question() {
 export function Level3Locked() {
   const { state, dispatch } = useGame();
   const next = state.currentPlayer === "A" ? state.players.B : state.players.A;
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Auto-advance after 2.5s (user can tap "Pass Device" to skip)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (!isTransitioning) {
+        setIsTransitioning(true);
+        dispatch({ type: "L3_LOCKED_CONTINUE" });
+      }
+    }, 2500);
+    return () => clearTimeout(t);
+  }, [dispatch, isTransitioning]);
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 text-center overflow-y-auto" data-testid="l3-locked-screen">
       <motion.div animate={{ scale: [1, 1.06, 1] }} transition={{ duration: 2, repeat: Infinity }}
@@ -289,8 +328,12 @@ export function Level3Locked() {
         Pass The Device
       </h3>
       <p className="mt-1 text-sm text-[#4B3B60]">Your partner's turn.</p>
-      <motion.button data-testid="l3-pass-device-btn" onClick={() => dispatch({ type: "L3_LOCKED_CONTINUE" })}
-        whileTap={{ scale: 0.97 }} whileHover={{ scale: 1.02 }}
+      <motion.button data-testid="l3-pass-device-btn" onClick={() => {
+        if (!isTransitioning) {
+          setIsTransitioning(true);
+          dispatch({ type: "L3_LOCKED_CONTINUE" });
+        }
+      }} whileTap={{ scale: 0.97 }} whileHover={{ scale: 1.02 }}
         className="mt-10 px-10 py-4 rounded-full bg-[#1A0B2E] text-white font-bold text-lg inline-flex items-center justify-center gap-2">
         Pass to {next.name} <ArrowRight size={18} />
       </motion.button>
@@ -300,13 +343,22 @@ export function Level3Locked() {
 
 export function Level3Handoff() {
   const { state, dispatch } = useGame();
-  const next = state.players[state.currentPlayer];
+  const [handoffPlayerName, setHandoffPlayerName] = useState(null);
+  const nextPlayer = state.players[state.currentPlayer];
+  
+  // P0.2 Fix: Capture player name once on mount to prevent instability
+  useEffect(() => {
+    setHandoffPlayerName(nextPlayer.name);
+  }, []);
+  
+  const displayName = handoffPlayerName || nextPlayer.name;
+  
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 text-center overflow-y-auto" data-testid="l3-handoff-screen">
-      <Avatar player={state.currentPlayer} name={next.name} size={96} />
+      <Avatar player={state.currentPlayer} name={displayName} size={96} />
       <div className="mt-6 text-[#FF3CAC] text-xs font-bold tracking-widest uppercase">Your Turn</div>
       <h2 className="mt-2 text-3xl font-black text-[#1A0B2E] leading-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>
-        Same card, <span className="text-[#FF3CAC]">{next.name}</span>
+        Same card, <span className="text-[#FF3CAC]">{displayName}</span>
       </h2>
       <p className="mt-3 text-[#4B3B60] text-sm max-w-xs">They'll answer the same question — no peeking.</p>
       <motion.button data-testid="l3-handoff-ready-btn" onClick={() => dispatch({ type: "L3_HANDOFF_READY" })}
@@ -333,6 +385,18 @@ export function Level3Both() {
   const { state, dispatch } = useGame();
   const last = state.level3.answers[state.level3.answers.length - 1];
   const isLastCard = state.level3.cardIndex + 1 >= state.level3.deck.length;
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Auto-advance after 2s (user can tap "Next Card" to skip)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (!isTransitioning) {
+        setIsTransitioning(true);
+        dispatch({ type: "L3_NEXT_CARD" });
+      }
+    }, 2000);
+    return () => clearTimeout(t);
+  }, [dispatch, isTransitioning]);
 
   return (
     <div className="flex-1 flex flex-col px-6 pt-6 pb-6 overflow-y-auto" data-testid="l3-both-screen">
@@ -352,13 +416,149 @@ export function Level3Both() {
 
       <motion.button
         data-testid="l3-next-card-btn"
-        onClick={() => dispatch({ type: "L3_NEXT_CARD" })}
+        onClick={() => {
+          if (!isTransitioning) {
+            setIsTransitioning(true);
+            dispatch({ type: "L3_NEXT_CARD" });
+          }
+        }}
         whileTap={{ scale: 0.97 }}
         className="mt-4 w-full py-4 rounded-full text-white font-bold text-lg shadow-[0_20px_40px_-15px_rgba(255,60,172,0.5)]"
         style={{ background: "linear-gradient(135deg,#6C3BFF,#FF3CAC)" }}
       >
         {isLastCard ? "See Results" : "Next Card"}
       </motion.button>
+    </div>
+  );
+}
+
+// ---------- Screen: Category Selection (NEW) ----------
+export function Level3CategorySelect() {
+  const { dispatch } = useGame();
+  const { LEVEL_3_GROUPS, buildLevel3Deck } = require("../data/level3Data");
+  const categories = Object.entries(LEVEL_3_GROUPS);
+
+  const handleSelect = (categoryKey) => {
+    const deck = buildLevel3Deck();
+    dispatch({ type: "L3_CATEGORY_SELECT", categoryKey, deck });
+  };
+
+  return (
+    <div className="flex-1 flex flex-col px-6 pt-8 pb-6 overflow-y-auto" data-testid="l3-category-select-screen">
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="text-center mb-6"
+      >
+        <div className="inline-flex items-center justify-center mb-3">
+          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#EDE9FE] text-[#7C3AED] tracking-wide">
+            Choose a Category
+          </span>
+        </div>
+        <h2 className="text-2xl font-black text-[#1A0B2E]" style={{ fontFamily: "'Outfit', sans-serif" }}>
+          What do you want to explore?
+        </h2>
+        <p className="mt-2 text-[#4B3B60] text-xs max-w-xs mx-auto">
+          Pick a category. Answer 5 reflective questions together.
+        </p>
+      </motion.div>
+
+      <div className="flex-1 grid grid-cols-2 gap-3">
+        {categories.map(([key, group], idx) => (
+          <motion.button
+            key={key}
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: idx * 0.05 }}
+            onClick={() => handleSelect(key)}
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.05 }}
+            className="flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-white shadow-[0_8px_24px_-6px_rgba(0,0,0,0.08)] hover:shadow-[0_12px_32px_-8px_rgba(0,0,0,0.12)] transition-all"
+            style={{ background: `linear-gradient(135deg, ${group.color}20, ${group.color}10)`, borderColor: group.color }}
+          >
+            <div className="text-3xl mb-2">{group.emoji}</div>
+            <div className="font-bold text-sm text-[#1A0B2E] text-center leading-tight">{group.name}</div>
+            <div className="text-[10px] text-[#9CA3AF] mt-1">5 prompts</div>
+          </motion.button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------- Screen: Reflection (NEW) ----------
+export function Level3Reflection() {
+  const { state, dispatch } = useGame();
+  const [selectedReaction, setSelectedReaction] = useState(null);
+  const isLastCard = state.level3.cardIndex + 1 >= state.level3.deck.length;
+
+  const reactions = [
+    { key: "not-surprised", label: "Not Surprised", emoji: "😌" },
+    { key: "somewhat-surprised", label: "Somewhat Surprised", emoji: "😮" },
+    { key: "very-surprised", label: "Very Surprised", emoji: "🤩" },
+  ];
+
+  const handleReactionSelect = (reactionKey) => {
+    setSelectedReaction(reactionKey);
+    setTimeout(() => {
+      dispatch({ type: "L3_REFLECTION_RECORD", reaction: reactionKey });
+    }, 600);
+  };
+
+  return (
+    <div className="flex-1 flex flex-col px-6 pt-8 pb-6 overflow-y-auto" data-testid="l3-reflection-screen">
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="text-center mb-8"
+      >
+        <h2 className="text-2xl font-black text-[#1A0B2E]" style={{ fontFamily: "'Outfit', sans-serif" }}>
+          What's your reaction?
+        </h2>
+        <p className="mt-2 text-[#4B3B60] text-sm">
+          How surprised were you by their answers?
+        </p>
+      </motion.div>
+
+      <div className="flex-1 flex flex-col items-center justify-center gap-4">
+        {reactions.map((reaction, idx) => (
+          <motion.button
+            key={reaction.key}
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: idx * 0.1 }}
+            onClick={() => handleReactionSelect(reaction.key)}
+            disabled={selectedReaction !== null}
+            whileTap={selectedReaction === null ? { scale: 0.95 } : {}}
+            whileHover={selectedReaction === null ? { scale: 1.02 } : {}}
+            className={`w-full py-4 px-6 rounded-2xl font-bold text-lg border-2 transition-all ${
+              selectedReaction === reaction.key
+                ? "border-[#E91E63] bg-[#FCE4EC] text-[#E91E63] shadow-[0_8px_20px_-6px_rgba(233,30,99,0.3)]"
+                : selectedReaction === null
+                ? "border-[#F3E8FF] bg-white text-[#1A0B2E] shadow-[0_4px_12px_-4px_rgba(0,0,0,0.08)] hover:border-[#E91E63]"
+                : "border-[#E5E7EB] bg-[#F9FAFB] text-[#9CA3AF] opacity-50"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span>{reaction.label}</span>
+              <span className="text-2xl">{reaction.emoji}</span>
+            </div>
+          </motion.button>
+        ))}
+      </div>
+
+      {selectedReaction && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mt-6 text-center text-sm text-[#4B3B60]"
+        >
+          {isLastCard ? "Moving to results..." : "Next card coming up..."}
+        </motion.div>
+      )}
     </div>
   );
 }
